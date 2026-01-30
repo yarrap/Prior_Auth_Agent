@@ -1,9 +1,10 @@
 import csv
 import json
-from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM # Added AutoTokenizer, AutoModelForCausalLM
+from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM 
 import torch 
 from langchain_core.tools import tool
 import re
+import os
 
 
 llm_eval_pipeline = None 
@@ -17,7 +18,7 @@ def initialize_llm_eval_pipeline(model_name):
                 "text-generation",
                 model=model_name,
                 tokenizer=model_name,
-                device=0 if torch.cuda.is_available() else -1,  # use GPU if available
+                device=0 if torch.cuda.is_available() else -1, 
                 torch_dtype=torch.bfloat16,
                 trust_remote_code=True
             )
@@ -74,7 +75,7 @@ def extract_prior_auth_flags(raw_text: str):
 def evaluate_with_mistral_and_export_csv(
     model_output,
     filtered_policies,
-    csv_path,
+    csv_path="lang_agent/result/prior_auth_evaluation.csv",
     model_name="meta-llama/Llama-3.2-1b-Instruct"
 ):
     """
@@ -88,10 +89,21 @@ def evaluate_with_mistral_and_export_csv(
     if not filtered_policies:
         print("⚠️ No policies provided to LLM evaluation.")
 
-    canonical_request = model_output["canonical_request"]
+    # canonical_request = model_output["canonical_request"]
+    if isinstance(model_output, dict):
+        model_output_dict = model_output
+    elif isinstance(model_output, str):
+        model_output_dict = json.loads(model_output)
+    else:
+        raise TypeError(
+            f"model_output must be dict or str, got {type(model_output)}"
+        )
+
+    canonical_request = model_output_dict.get("canonical_request", {})
+
 
     # Enforce prior auth / med necessity from raw text
-    raw_text = model_output.get("raw_text", "")
+    raw_text = model_output_dict.get("raw_text", "")
     prior_auth_flag, med_necess_flag = extract_prior_auth_flags(raw_text)
     canonical_request["prior_auth_required"] = prior_auth_flag
     canonical_request["medical_necessity_review"] = med_necess_flag
@@ -170,6 +182,7 @@ Return STRICT JSON only:
     # --------------------------------------------------
     # CSV EXPORT
     # --------------------------------------------------
+    os.makedirs(os.path.dirname(csv_path), exist_ok=True)
     with open(csv_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(
             f,

@@ -2,9 +2,9 @@ import json
 from langchain_core.tools import tool
 
 VALID_PLANS = {"ppo basic", "ppo gold", "hmo silver", "hmo platinum", "epo standard"}
-
+# , all_policies: list
 @tool
-def filter_policies_simple(intent: str, canonical_request: dict, all_policies: list) -> list:
+def filter_policies_simple(intent: str, canonical_request: dict) -> list:
     """
     Filter policies based only on:
     1️⃣ Intent (PriorAuth, Claim, Appeal)
@@ -20,6 +20,9 @@ def filter_policies_simple(intent: str, canonical_request: dict, all_policies: l
         return []
 
     applicable_policies = []
+
+    with open("new_structured_policies.json", "r") as f:
+        all_policies = json.load(f)
 
     for policy in all_policies:
         policy_intent = policy.get("intent", "").strip().lower()
