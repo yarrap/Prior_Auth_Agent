@@ -21,7 +21,7 @@ def filter_policies_simple(intent: str, canonical_request: dict) -> list:
 
     applicable_policies = []
 
-    with open("new_structured_policies.json", "r") as f:
+    with open("/Users/priyayarrabolu/Desktop/Priya/Full_Time/companies/Premera/new_structured_policies.json", "r") as f:
         all_policies = json.load(f)
 
     for policy in all_policies:

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prior Authorization Agent</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .main {
+            padding: 30px;
+        }
+        
+        .input-section {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .button:active {
+            transform: translateY(0);
+        }
+        
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .result-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .result-section.show {
+            display: block;
+        }
+        
+        .result-header {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+        
+        .result-content {
+            background: white;
+            padding: 20px;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            color: #333;
+            border-left: 4px solid #667eea;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: #fee;
+            border-left-color: #f44;
+            color: #c00;
+        }
+        
+        .example {
+            font-size: 13px;
+            color: #666;
+            margin-top: 8px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 Prior Authorization Agent</h1>
+            <p>Paste your prior authorization request details below</p>
+        </div>
+        
+        <div class="main">
+            <div class="input-section">
+                <label for="userInput">Enter Prior Authorization Details:</label>
+                <textarea 
+                    id="userInput" 
+                    placeholder="Example:
+
+Patient: John Doe, Age 45
+Diagnosis: Chronic lower back pain (ICD-10: M54.5)
+Procedure: MRI Lumbar Spine (CPT: 72148)
+Medical Necessity: Failed 6 weeks conservative treatment
+Treating Physician: Dr. Smith
+
+Paste your details here..."
+                ></textarea>
+                <p class="example">
+                    💡 Tip: Include patient info, diagnosis, procedure codes, and medical necessity
+                </p>
+            </div>
+            
+            <button class="button" onclick="processRequest()">
+                Process Prior Authorization
+            </button>
+            
+            <div id="loading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Processing your request...</p>
+            </div>
+            
+            <div id="result" class="result-section">
+                <div class="result-header">Agent Response:</div>
+                <div id="resultContent" class="result-content"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        async function processRequest() {
+            const userInput = document.getElementById('userInput').value.trim();
+            const button = document.querySelector('.button');
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            const resultContent = document.getElementById('resultContent');
+            
+            // Validate input
+            if (!userInput) {
+                alert('Please enter some text first!');
+                return;
+            }
+            
+            // Show loading, hide result
+            button.disabled = true;
+            loading.style.display = 'block';
+            result.classList.remove('show');
+            resultContent.classList.remove('error');
+            
+            try {
+                // Call the API
+                const response = await fetch('http://localhost:8000/process', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: userInput
+                    })
+                });
+                
+                const data = await response.json();
+                
+                // Hide loading
+                loading.style.display = 'none';
+                button.disabled = false;
+                
+                if (response.ok) {
+                    // Show success result
+                    resultContent.textContent = data.agent_response;
+                    result.classList.add('show');
+                } else {
+                    // Show error
+                    resultContent.textContent = `Error: ${data.detail || 'Unknown error'}`;
+                    resultContent.classList.add('error');
+                    result.classList.add('show');
+                }
+                
+            } catch (error) {
+                // Handle network errors
+                loading.style.display = 'none';
+                button.disabled = false;
+                resultContent.textContent = `Error: Cannot connect to server. Make sure the API is running at http://localhost:8000`;
+                resultContent.classList.add('error');
+                result.classList.add('show');
+            }
+        }
+        
+        // Allow Enter key in textarea (Ctrl+Enter to submit)
+        document.getElementById('userInput').addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                processRequest();
+            }
+        });
+    </script>
+</body>
+</html>

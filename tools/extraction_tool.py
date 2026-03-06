@@ -75,7 +75,7 @@ def extract_prior_auth_flags(raw_text: str):
 def evaluate_with_mistral_and_export_csv(
     model_output,
     filtered_policies,
-    csv_path="lang_agent/result/prior_auth_evaluation.csv",
+    csv_path="result/prior_auth_evaluation.csv",
     model_name="meta-llama/Llama-3.2-1b-Instruct"
 ):
     """
