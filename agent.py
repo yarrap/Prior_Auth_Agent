@@ -6,6 +6,7 @@ from tools.entity_extraction_tool import extract_entities
 from tools.filter_policies_tool import filter_policies_simple
 from tools.extraction_tool import evaluate_with_mistral_and_export_csv
 from langchain.chat_models import init_chat_model
+from langgraph.checkpoint.memory import InMemorySaver
 from prompt import system_prompt
 import os
 from pathlib import Path
@@ -19,7 +20,8 @@ model = init_chat_model("gpt-5-nano")
 agent_executor = create_agent(
     model=model,
     tools=[document_ingestion_tool, extract_entities, filter_policies_simple, evaluate_with_mistral_and_export_csv],
-    system_prompt=system_prompt
+    system_prompt=system_prompt,
+    checkpointer=InMemorySaver()
 )
 
 def run_agent(input_data):
@@ -55,11 +57,10 @@ def run_agent(input_data):
 
 Please extract the relevant entities, evaluate against policies, and provide your analysis."""
 
-    response = agent_executor.invoke({
-        "messages": [
-            HumanMessage(content=message_content)
-        ]
-    })
+    response = agent_executor.invoke(
+        {"messages": [HumanMessage(content=message_content)]},
+        {"configurable": {"thread_id": "1"}}
+        )
     return response
 
 
