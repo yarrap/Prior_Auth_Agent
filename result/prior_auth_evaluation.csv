@@ -1,0 +1,12 @@
+policy_id,rule_text,relevance,judgement,explanation
+3.1,Emergency services do not require prior authorization and are covered regardless of network status.,NOT_RELEVANT,NOT_APPLICABLE,
+3.3,"All requests must include patient demographics, diagnosis, requested procedure, and rendering provider details.",NOT_RELEVANT,NOT_APPLICABLE,
+3.4,Incomplete or inconsistent submissions may be pended or denied.,NOT_RELEVANT,NOT_APPLICABLE,
+3.5,"Experimental, investigational, or non–FDA-approved treatments are excluded unless an exception is approved.",NOT_RELEVANT,NOT_APPLICABLE,
+8.2,Routine diagnostic imaging may be auto-approved based on risk thresholds.,NOT_RELEVANT,NOT_APPLICABLE,
+8.4,Medical necessity review is streamlined for low-risk procedures.,NOT_RELEVANT,NOT_APPLICABLE,
+8.5,Limited out-of-network exceptions may be granted with approval.,NOT_RELEVANT,NOT_APPLICABLE,
+10.1,All oncology treatments require prior authorization.,NOT_RELEVANT,NOT_APPLICABLE,
+10.2,Peer-to-peer clinical review is mandatory for initial and continuation requests.,NOT_RELEVANT,NOT_APPLICABLE,
+10.3,Treatment plans must align with nationally recognized guidelines.,NOT_RELEVANT,NOT_APPLICABLE,
+10.4,Experimental oncology therapies are excluded unless exception approval is granted.,NOT_RELEVANT,NOT_APPLICABLE,
