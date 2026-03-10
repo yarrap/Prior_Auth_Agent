@@ -3,278 +3,1588 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prior Authorization Agent</title>
+    <title>Prior Auth Agent</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --bg: #0f0f10;
+            --sidebar-bg: #161618;
+            --surface: #1e1e21;
+            --surface2: #28282c;
+            --border: #2e2e33;
+            --accent: #4f8ef7;
+            --accent2: #7c3aed;
+            --text: #e8e8ed;
+            --text-muted: #7a7a85;
+            --text-dim: #4a4a52;
+            --user-bubble: #1a2a4a;
+            --agent-bubble: #1e1e21;
+            --success: #34d399;
+            --danger: #f87171;
+            --warning: #fbbf24;
         }
-        
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
             overflow: hidden;
         }
-        
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            width: 260px;
+            min-width: 260px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .sidebar-header {
+            padding: 18px 16px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .logo-text {
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: -0.2px;
+            color: var(--text);
+        }
+
+        .logo-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .new-chat-btn {
+            width: 100%;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 9px 14px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.15s, border-color 0.15s;
+        }
+
+        .new-chat-btn:hover {
+            background: var(--surface);
+            border-color: var(--accent);
+        }
+
+        .new-chat-btn svg { opacity: 0.7; }
+
+        .chats-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 8px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+
+        .chats-list::-webkit-scrollbar { width: 4px; }
+        .chats-list::-webkit-scrollbar-track { background: transparent; }
+        .chats-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+        .chats-section-label {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            padding: 8px 8px 4px;
+        }
+
+        .chat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: background 0.12s;
+            position: relative;
+        }
+
+        .chat-item:hover { background: var(--surface2); }
+        .chat-item.active { background: var(--surface2); border: 1px solid var(--border); }
+
+        .chat-item-icon { font-size: 13px; opacity: 0.6; flex-shrink: 0; }
+        .chat-item-text { font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+        .chat-item-date { font-size: 10px; color: var(--text-dim); flex-shrink: 0; }
+
+        .chat-item-delete {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 14px;
+            padding: 2px 4px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .chat-item:hover .chat-item-delete { display: block; }
+        .chat-item:hover .chat-item-date { display: none; }
+
+        .sidebar-footer {
+            padding: 14px 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--success);
+            margin-right: 6px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .status-text { font-size: 11px; color: var(--text-muted); }
+
+        /* ── MAIN ── */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg);
+            flex-shrink: 0;
+        }
+
+        .chat-title { font-size: 14px; font-weight: 500; color: var(--text-muted); }
+        .chat-title span { color: var(--text); font-weight: 600; }
+
+        .model-badge {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 11px;
+            font-family: 'DM Mono', monospace;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        /* ── MESSAGES ── */
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 28px 0;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+
+        .messages::-webkit-scrollbar { width: 4px; }
+        .messages::-webkit-scrollbar-track { background: transparent; }
+        .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+        .message-row {
+            display: flex;
+            padding: 6px 24px;
+            gap: 14px;
+            max-width: 860px;
+            margin: 0 auto;
+            width: 100%;
+            animation: fadeUp 0.2s ease;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .avatar.user { background: var(--user-bubble); border: 1px solid #2a3f6a; }
+        .avatar.agent { background: linear-gradient(135deg, var(--accent), var(--accent2)); }
+
+        .message-content { flex: 1; padding-top: 4px; }
+        .message-sender { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; letter-spacing: 0.02em; }
+
+        .message-text {
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--text);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .message-text.user-text {
+            background: var(--user-bubble);
+            border: 1px solid #2a3f6a;
+            padding: 12px 16px;
+            border-radius: 4px 12px 12px 12px;
+            display: inline-block;
+            max-width: 100%;
+        }
+
+        .message-time { font-size: 10px; color: var(--text-dim); margin-top: 6px; font-family: 'DM Mono', monospace; }
+
+        /* ── FILE ATTACHMENT PREVIEW (in message) ── */
+        .attachment-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(79, 142, 247, 0.1);
+            border: 1px solid rgba(79, 142, 247, 0.25);
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: var(--accent);
+            max-width: 320px;
+        }
+
+        .attachment-badge-icon { font-size: 18px; flex-shrink: 0; }
+        .attachment-badge-info { display: flex; flex-direction: column; gap: 1px; overflow: hidden; }
+        .attachment-badge-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+        .attachment-badge-meta { font-size: 10px; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+
+        /* ── EMPTY STATE ── */
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 24px;
             text-align: center;
         }
-        
-        .header h1 {
+
+        .empty-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 28px;
-            margin-bottom: 8px;
-        }
-        
-        .header p {
-            opacity: 0.9;
-            font-size: 14px;
-        }
-        
-        .main {
-            padding: 30px;
-        }
-        
-        .input-section {
             margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(79, 142, 247, 0.25);
         }
-        
-        label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: #333;
-        }
-        
-        textarea {
-            width: 100%;
-            min-height: 200px;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
-            font-family: inherit;
-            resize: vertical;
-            transition: border-color 0.3s;
-        }
-        
-        textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
-        .button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 14px 32px;
-            font-size: 16px;
-            font-weight: 600;
-            border-radius: 8px;
+
+        .empty-title { font-size: 22px; font-weight: 600; color: var(--text); margin-bottom: 8px; letter-spacing: -0.3px; }
+        .empty-sub { font-size: 14px; color: var(--text-muted); max-width: 400px; line-height: 1.6; margin-bottom: 28px; }
+
+        .suggestion-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 600px; }
+
+        .chip {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 12px;
+            padding: 8px 14px;
+            border-radius: 20px;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            font-family: inherit;
+            transition: all 0.15s;
+            line-height: 1.4;
+            text-align: left;
         }
-        
-        .button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+
+        .chip:hover { background: var(--surface2); border-color: var(--accent); color: var(--text); }
+
+        /* ── TYPING INDICATOR ── */
+        .typing-row {
+            display: flex;
+            padding: 6px 24px;
+            gap: 14px;
+            max-width: 860px;
+            margin: 0 auto;
+            width: 100%;
         }
-        
-        .button:active {
-            transform: translateY(0);
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+            padding: 14px 16px;
+            background: var(--surface);
+            border-radius: 4px 12px 12px 12px;
+            align-items: center;
         }
-        
-        .button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
+
+        .typing-dots span {
+            width: 6px; height: 6px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            animation: bounce 1.2s infinite;
         }
-        
-        .result-section {
-            margin-top: 30px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 8px;
+
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-5px); }
+        }
+
+        /* ── INPUT AREA ── */
+        .input-area {
+            padding: 12px 24px 20px;
+            background: var(--bg);
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        /* ── ATTACHED FILE STRIP (above input box) ── */
+        .file-strip {
+            max-width: 860px;
+            margin: 0 auto 8px;
             display: none;
         }
-        
-        .result-section.show {
-            display: block;
+
+        .file-strip.visible { display: flex; align-items: center; gap: 10px; }
+
+        .file-strip-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--surface);
+            border: 1px solid rgba(79, 142, 247, 0.35);
+            border-radius: 10px;
+            padding: 8px 14px 8px 10px;
+            flex: 1;
+            min-width: 0;
+            position: relative;
+            overflow: hidden;
         }
-        
-        .result-header {
-            font-weight: 600;
-            color: #667eea;
-            margin-bottom: 12px;
+
+        .file-strip-card::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 3px;
+            background: linear-gradient(to bottom, var(--accent), var(--accent2));
+            border-radius: 3px 0 0 3px;
+        }
+
+        .file-strip-icon { font-size: 22px; flex-shrink: 0; }
+
+        .file-strip-details { flex: 1; min-width: 0; }
+        .file-strip-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .file-strip-meta { font-size: 11px; color: var(--text-muted); font-family: 'DM Mono', monospace; margin-top: 1px; }
+
+        .file-strip-progress {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            align-items: flex-end;
+        }
+
+        .file-strip-progress.visible { display: flex; }
+
+        .progress-bar-track {
+            width: 80px;
+            height: 3px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(to right, var(--accent), var(--accent2));
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-label { font-size: 10px; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+
+        .file-strip-remove {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
             font-size: 16px;
+            padding: 4px;
+            border-radius: 4px;
+            flex-shrink: 0;
+            transition: color 0.15s;
+            line-height: 1;
         }
-        
-        .result-content {
-            background: white;
-            padding: 20px;
-            border-radius: 6px;
-            white-space: pre-wrap;
+
+        .file-strip-remove:hover { color: var(--danger); }
+
+        .file-type-tag {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            flex-shrink: 0;
+        }
+
+        .tag-pdf { background: rgba(248, 113, 113, 0.15); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.3); }
+        .tag-image { background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3); }
+        .tag-txt { background: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); }
+        .tag-doc { background: rgba(79, 142, 247, 0.15); color: #4f8ef7; border: 1px solid rgba(79, 142, 247, 0.3); }
+
+        /* ── INPUT BOX ── */
+        .input-wrapper {
+            max-width: 860px;
+            margin: 0 auto;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+
+        .input-wrapper:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(79, 142, 247, 0.1);
+        }
+
+        textarea#messageInput {
+            width: 100%;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
             line-height: 1.6;
-            color: #333;
-            border-left: 4px solid #667eea;
+            padding: 14px 16px 10px;
+            resize: none;
+            min-height: 52px;
+            max-height: 200px;
+            scrollbar-width: thin;
         }
-        
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #667eea;
+
+        textarea#messageInput::placeholder { color: var(--text-dim); }
+
+        .input-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 10px 10px 10px;
+            gap: 8px;
         }
-        
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
+
+        .input-left-actions { display: flex; align-items: center; gap: 6px; }
+        .input-hint { font-size: 11px; color: var(--text-dim); }
+
+        /* ── ATTACH BUTTON ── */
+        .attach-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            width: 30px;
+            height: 30px;
+            border-radius: 7px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            flex-shrink: 0;
+            position: relative;
         }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+
+        .attach-btn:hover {
+            background: var(--surface2);
+            border-color: var(--accent);
+            color: var(--accent);
         }
-        
-        .error {
-            background: #fee;
-            border-left-color: #f44;
-            color: #c00;
+
+        .attach-btn.has-file {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(79, 142, 247, 0.1);
         }
-        
-        .example {
+
+        /* ── ATTACH DROPDOWN ── */
+        .attach-dropdown {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 0;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 6px;
+            display: none;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 200px;
+            z-index: 100;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            animation: dropIn 0.15s ease;
+        }
+
+        @keyframes dropIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .attach-dropdown.open { display: flex; }
+
+        .attach-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: background 0.12s;
+            border: none;
+            background: none;
+            color: var(--text);
+            font-family: inherit;
             font-size: 13px;
-            color: #666;
-            margin-top: 8px;
-            font-style: italic;
+            text-align: left;
+            width: 100%;
         }
+
+        .attach-option:hover { background: var(--surface); }
+
+        .attach-option-icon {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .attach-option-label { font-size: 13px; font-weight: 500; }
+        .attach-option-sub { font-size: 11px; color: var(--text-muted); display: block; }
+
+        /* hidden file inputs */
+        #fileInputPdf,
+        #fileInputImage,
+        #fileInputText { display: none; }
+
+        /* ── SEND BUTTON ── */
+        .send-btn {
+            background: var(--accent);
+            border: none;
+            color: white;
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s, transform 0.1s;
+            flex-shrink: 0;
+        }
+
+        .send-btn:hover { background: #3d7de8; }
+        .send-btn:active { transform: scale(0.95); }
+        .send-btn:disabled { background: var(--surface2); cursor: not-allowed; }
+        .send-btn svg { pointer-events: none; }
+
+        .disclaimer {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-top: 10px;
+            max-width: 860px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* ── ERROR ── */
+        .error-message .message-text {
+            background: rgba(248, 113, 113, 0.1);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            color: var(--danger);
+            padding: 12px 16px;
+            border-radius: 4px 12px 12px 12px;
+            display: inline-block;
+        }
+
+        /* ── HITL REVIEW CARD ── */
+        .hitl-card {
+            background: var(--surface);
+            border: 1px solid var(--warning);
+            border-radius: 10px;
+            padding: 14px 16px;
+            max-width: 480px;
+            animation: fadeUp 0.2s ease;
+        }
+
+        .hitl-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .hitl-badge {
+            background: rgba(251, 191, 36, 0.15);
+            border: 1px solid rgba(251, 191, 36, 0.4);
+            color: var(--warning);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            padding: 2px 8px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        .hitl-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .hitl-tool-box {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+            font-family: 'DM Mono', monospace;
+            font-size: 12px;
+        }
+
+        .hitl-tool-name {
+            color: var(--accent);
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .hitl-tool-arg {
+            color: var(--text-muted);
+            word-break: break-all;
+        }
+
+        .hitl-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .hitl-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 7px;
+            border: 1px solid;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .hitl-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .hitl-btn-approve {
+            background: rgba(52, 211, 153, 0.1);
+            border-color: rgba(52, 211, 153, 0.4);
+            color: var(--success);
+        }
+        .hitl-btn-approve:hover:not(:disabled) {
+            background: rgba(52, 211, 153, 0.2);
+            border-color: var(--success);
+        }
+
+        .hitl-btn-reject {
+            background: rgba(248, 113, 113, 0.1);
+            border-color: rgba(248, 113, 113, 0.4);
+            color: var(--danger);
+        }
+        .hitl-btn-reject:hover:not(:disabled) {
+            background: rgba(248, 113, 113, 0.2);
+            border-color: var(--danger);
+        }
+
+        .hitl-btn-edit {
+            background: rgba(79, 142, 247, 0.1);
+            border-color: rgba(79, 142, 247, 0.4);
+            color: var(--accent);
+        }
+        .hitl-btn-edit:hover:not(:disabled) {
+            background: rgba(79, 142, 247, 0.2);
+            border-color: var(--accent);
+        }
+
+        .hitl-edit-row {
+            display: none;
+            gap: 8px;
+            margin-top: 10px;
+            align-items: center;
+        }
+
+        .hitl-edit-row.visible { display: flex; }
+
+        .hitl-edit-input {
+            flex: 1;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: 'DM Mono', monospace;
+            font-size: 12px;
+            padding: 7px 10px;
+            outline: none;
+        }
+
+        .hitl-edit-input:focus { border-color: var(--accent); }
+
+        .hitl-edit-confirm {
+            background: var(--accent);
+            border: none;
+            color: white;
+            padding: 7px 12px;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .hitl-edit-confirm:hover { background: #3d7de8; }
+
+        .hitl-resolved {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-style: italic;
+            margin-top: 8px;
+        }
+
+        /* ── DRAG OVERLAY ── */
+        .drag-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 15, 16, 0.85);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+            pointer-events: none;
+        }
+
+        .drag-overlay.active { display: flex; }
+
+        .drag-box {
+            border: 2px dashed var(--accent);
+            border-radius: 20px;
+            padding: 48px 64px;
+            text-align: center;
+            background: rgba(79, 142, 247, 0.05);
+        }
+
+        .drag-icon { font-size: 48px; margin-bottom: 12px; }
+        .drag-title { font-size: 20px; font-weight: 600; color: var(--text); }
+        .drag-sub { font-size: 13px; color: var(--text-muted); margin-top: 6px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🏥 Prior Authorization Agent</h1>
-            <p>Paste your prior authorization request details below</p>
+
+<!-- DRAG-AND-DROP OVERLAY -->
+<div class="drag-overlay" id="dragOverlay">
+    <div class="drag-box">
+        <div class="drag-icon">📄</div>
+        <div class="drag-title">Drop your document here</div>
+        <div class="drag-sub">PDF · PNG · JPG · TXT · supported</div>
+    </div>
+</div>
+
+<!-- hidden file inputs -->
+<input type="file" id="fileInputPdf"   accept=".pdf" />
+<input type="file" id="fileInputImage" accept=".png,.jpg,.jpeg" />
+<input type="file" id="fileInputText"  accept=".txt,.doc,.docx" />
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+    <div class="sidebar-header">
+        <div class="logo">
+            <div class="logo-icon">🏥</div>
+            <div>
+                <div class="logo-text">Prior Auth Agent</div>
+                <div class="logo-sub">AI-powered authorization</div>
+            </div>
         </div>
-        
-        <div class="main">
-            <div class="input-section">
-                <label for="userInput">Enter Prior Authorization Details:</label>
-                <textarea 
-                    id="userInput" 
-                    placeholder="Example:
+        <button class="new-chat-btn" onclick="newChat()">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M12 5v14M5 12h14"/>
+            </svg>
+            New Chat
+        </button>
+    </div>
+    <div class="chats-list" id="chatsList"></div>
+    <div class="sidebar-footer">
+        <span class="status-dot"></span>
+        <span class="status-text" id="statusText">Connected to API</span>
+    </div>
+</aside>
 
-Patient: John Doe, Age 45
-Diagnosis: Chronic lower back pain (ICD-10: M54.5)
-Procedure: MRI Lumbar Spine (CPT: 72148)
-Medical Necessity: Failed 6 weeks conservative treatment
-Treating Physician: Dr. Smith
+<!-- MAIN -->
+<main class="main">
+    <div class="chat-header">
+        <div class="chat-title"><span id="activeChatTitle">New Chat</span></div>
+        <div class="model-badge">prior-auth-agent</div>
+    </div>
 
-Paste your details here..."
-                ></textarea>
-                <p class="example">
-                    💡 Tip: Include patient info, diagnosis, procedure codes, and medical necessity
-                </p>
-            </div>
-            
-            <button class="button" onclick="processRequest()">
-                Process Prior Authorization
-            </button>
-            
-            <div id="loading" class="loading" style="display: none;">
-                <div class="spinner"></div>
-                <p>Processing your request...</p>
-            </div>
-            
-            <div id="result" class="result-section">
-                <div class="result-header">Agent Response:</div>
-                <div id="resultContent" class="result-content"></div>
+    <div class="messages" id="messagesContainer">
+        <div class="empty-state" id="emptyState">
+            <div class="empty-icon">🏥</div>
+            <div class="empty-title">Prior Authorization Assistant</div>
+            <div class="empty-sub">Submit prior authorization requests via text or upload a document — PDF, image, or text file — for instant AI-powered analysis.</div>
+            <div class="suggestion-chips">
+                <button class="chip" onclick="useChip(this)">Patient needs MRI for chronic back pain — CPT 72148</button>
+                <button class="chip" onclick="useChip(this)">Prior auth for Humira (adalimumab) — rheumatoid arthritis</button>
+                <button class="chip" onclick="useChip(this)">Outpatient surgery approval — laparoscopic cholecystectomy</button>
+                <button class="chip" onclick="useChip(this)">Physical therapy 20 sessions — post knee replacement</button>
             </div>
         </div>
     </div>
-    
-    <script>
-        async function processRequest() {
-            const userInput = document.getElementById('userInput').value.trim();
-            const button = document.querySelector('.button');
-            const loading = document.getElementById('loading');
-            const result = document.getElementById('result');
-            const resultContent = document.getElementById('resultContent');
-            
-            // Validate input
-            if (!userInput) {
-                alert('Please enter some text first!');
-                return;
-            }
-            
-            // Show loading, hide result
-            button.disabled = true;
-            loading.style.display = 'block';
-            result.classList.remove('show');
-            resultContent.classList.remove('error');
-            
-            try {
-                // Call the API
-                const response = await fetch('http://localhost:8000/process', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        text: userInput
-                    })
-                });
-                
-                const data = await response.json();
-                
-                // Hide loading
-                loading.style.display = 'none';
-                button.disabled = false;
-                
-                if (response.ok) {
-                    // Show success result
-                    resultContent.textContent = data.agent_response;
-                    result.classList.add('show');
-                } else {
-                    // Show error
-                    resultContent.textContent = `Error: ${data.detail || 'Unknown error'}`;
-                    resultContent.classList.add('error');
-                    result.classList.add('show');
-                }
-                
-            } catch (error) {
-                // Handle network errors
-                loading.style.display = 'none';
-                button.disabled = false;
-                resultContent.textContent = `Error: Cannot connect to server. Make sure the API is running at http://localhost:8000`;
-                resultContent.classList.add('error');
-                result.classList.add('show');
-            }
+
+    <div class="input-area">
+
+        <!-- File strip (shown when a file is attached) -->
+        <div class="file-strip" id="fileStrip">
+            <div class="file-strip-card" id="fileStripCard">
+                <span class="file-strip-icon" id="fileStripIcon">📄</span>
+                <div class="file-strip-details">
+                    <div class="file-strip-name" id="fileStripName">document.pdf</div>
+                    <div class="file-strip-meta" id="fileStripMeta">0 KB · ready</div>
+                </div>
+                <span class="file-type-tag" id="fileTypeTag">PDF</span>
+                <div class="file-strip-progress" id="fileStripProgress">
+                    <div class="progress-bar-track"><div class="progress-bar-fill" id="progressFill"></div></div>
+                    <span class="progress-label" id="progressLabel">uploading…</span>
+                </div>
+            </div>
+            <button class="file-strip-remove" id="fileStripRemove" onclick="removeFile()" title="Remove file">✕</button>
+        </div>
+
+        <!-- Input box -->
+        <div class="input-wrapper">
+            <textarea
+                id="messageInput"
+                placeholder="Describe the prior authorization request, or attach a document below…"
+                rows="1"
+                onkeydown="handleKeydown(event)"
+                oninput="autoResize(this)"
+            ></textarea>
+            <div class="input-footer">
+                <div class="input-left-actions">
+                    <!-- Attach button + dropdown -->
+                    <div style="position:relative;">
+                        <button class="attach-btn" id="attachBtn" onclick="toggleAttachMenu(event)" title="Attach document">
+                            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
+                            </svg>
+                        </button>
+                        <div class="attach-dropdown" id="attachDropdown">
+                            <button class="attach-option" onclick="triggerFileInput('pdf')">
+                                <span class="attach-option-icon">📕</span>
+                                <div>
+                                    <span class="attach-option-label">PDF Document</span>
+                                    <span class="attach-option-sub">.pdf — prior auth forms, referrals</span>
+                                </div>
+                            </button>
+                            <button class="attach-option" onclick="triggerFileInput('image')">
+                                <span class="attach-option-icon">🖼️</span>
+                                <div>
+                                    <span class="attach-option-label">Image / Scan</span>
+                                    <span class="attach-option-sub">.png, .jpg — scanned documents, EOBs</span>
+                                </div>
+                            </button>
+                            <button class="attach-option" onclick="triggerFileInput('text')">
+                                <span class="attach-option-icon">📝</span>
+                                <div>
+                                    <span class="attach-option-label">Text File</span>
+                                    <span class="attach-option-sub">.txt, .doc — plain text requests</span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                    <span class="input-hint">Enter to send · Shift+Enter for new line</span>
+                </div>
+                <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="disclaimer">For informational use only. Always verify with the payer's official guidelines.</div>
+    </div>
+</main>
+
+<script>
+// ── STATE ──
+let chats = JSON.parse(localStorage.getItem('pa_chats') || '[]');
+let activeChatId = null;
+let pendingFile = null; // { file, name, size, type, ext, base64? }
+
+// ── INIT ──
+function init() {
+    renderSidebar();
+    if (chats.length > 0) loadChat(chats[0].id);
+    checkAPIStatus();
+    setupDragDrop();
+}
+
+// ── CHAT MANAGEMENT ──
+function newChat() {
+    const id = 'chat_' + Date.now();
+    const chat = { id, title: 'New Chat', messages: [], createdAt: new Date().toISOString() };
+    chats.unshift(chat);
+    saveChats();
+    loadChat(id);
+    renderSidebar();
+    document.getElementById('messageInput').focus();
+}
+
+function loadChat(id) {
+    activeChatId = id;
+    const chat = chats.find(c => c.id === id);
+    if (!chat) return;
+    document.getElementById('activeChatTitle').textContent = chat.title;
+    renderMessages(chat);
+    renderSidebar();
+}
+
+function deleteChat(id, e) {
+    e.stopPropagation();
+    chats = chats.filter(c => c.id !== id);
+    saveChats();
+    if (activeChatId === id) {
+        activeChatId = null;
+        document.getElementById('activeChatTitle').textContent = 'New Chat';
+        document.getElementById('messagesContainer').innerHTML = emptyStateHTML();
+    }
+    renderSidebar();
+}
+
+function getActiveChat() { return chats.find(c => c.id === activeChatId); }
+function saveChats() { localStorage.setItem('pa_chats', JSON.stringify(chats)); }
+
+// ── FILE HANDLING ──
+const FILE_ICONS = { pdf: '📕', png: '🖼️', jpg: '🖼️', jpeg: '🖼️', txt: '📝', doc: '📄', docx: '📄' };
+const FILE_TAG_CLASS = { pdf: 'tag-pdf', png: 'tag-image', jpg: 'tag-image', jpeg: 'tag-image', txt: 'tag-txt', doc: 'tag-doc', docx: 'tag-doc' };
+const ACCEPTED_EXTS = ['pdf', 'png', 'jpg', 'jpeg', 'txt', 'doc', 'docx'];
+
+function triggerFileInput(type) {
+    closeAttachMenu();
+    if (type === 'pdf')   document.getElementById('fileInputPdf').click();
+    if (type === 'image') document.getElementById('fileInputImage').click();
+    if (type === 'text')  document.getElementById('fileInputText').click();
+}
+
+document.getElementById('fileInputPdf').addEventListener('change',   e => handleFileSelect(e.target.files[0]));
+document.getElementById('fileInputImage').addEventListener('change', e => handleFileSelect(e.target.files[0]));
+document.getElementById('fileInputText').addEventListener('change',  e => handleFileSelect(e.target.files[0]));
+
+function handleFileSelect(file) {
+    if (!file) return;
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (!ACCEPTED_EXTS.includes(ext)) {
+        alert(`Unsupported file type: .${ext}\nSupported: PDF, PNG, JPG, TXT, DOC, DOCX`);
+        return;
+    }
+
+    pendingFile = { file, name: file.name, size: file.size, ext, type: file.type };
+
+    // Show the file strip
+    showFileStrip(pendingFile);
+
+    // Read file as base64 for sending to backend
+    const reader = new FileReader();
+    reader.onload = () => {
+        pendingFile.base64 = reader.result.split(',')[1];
+        updateFileStripReady();
+    };
+    reader.readAsDataURL(file);
+
+    // Also read as text for .txt files
+    if (ext === 'txt') {
+        const textReader = new FileReader();
+        textReader.onload = () => { pendingFile.textContent = textReader.result; };
+        textReader.readAsText(file);
+    }
+
+    // Update attach button
+    document.getElementById('attachBtn').classList.add('has-file');
+    // Focus textarea for optional note
+    document.getElementById('messageInput').focus();
+}
+
+function showFileStrip(f) {
+    const ext = f.ext;
+    const strip = document.getElementById('fileStrip');
+    document.getElementById('fileStripIcon').textContent = FILE_ICONS[ext] || '📄';
+    document.getElementById('fileStripName').textContent = f.name;
+    document.getElementById('fileStripMeta').textContent = formatSize(f.size) + ' · reading…';
+    const tag = document.getElementById('fileTypeTag');
+    tag.textContent = ext.toUpperCase();
+    tag.className = 'file-type-tag ' + (FILE_TAG_CLASS[ext] || 'tag-doc');
+    strip.classList.add('visible');
+    // Animate progress bar
+    const prog = document.getElementById('fileStripProgress');
+    prog.classList.add('visible');
+    const fill = document.getElementById('progressFill');
+    document.getElementById('progressLabel').textContent = 'reading…';
+    fill.style.width = '0%';
+    setTimeout(() => fill.style.width = '60%', 50);
+    setTimeout(() => fill.style.width = '90%', 300);
+}
+
+function updateFileStripReady() {
+    const fill = document.getElementById('progressFill');
+    fill.style.width = '100%';
+    document.getElementById('progressLabel').textContent = 'ready';
+    document.getElementById('fileStripMeta').textContent = formatSize(pendingFile.size) + ' · ready to send';
+    setTimeout(() => {
+        document.getElementById('fileStripProgress').classList.remove('visible');
+    }, 800);
+}
+
+function removeFile() {
+    pendingFile = null;
+    document.getElementById('fileStrip').classList.remove('visible');
+    document.getElementById('attachBtn').classList.remove('has-file');
+    document.getElementById('fileInputPdf').value = '';
+    document.getElementById('fileInputImage').value = '';
+    document.getElementById('fileInputText').value = '';
+}
+
+function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+}
+
+// ── ATTACH MENU ──
+function toggleAttachMenu(e) {
+    e.stopPropagation();
+    const dd = document.getElementById('attachDropdown');
+    dd.classList.toggle('open');
+}
+
+function closeAttachMenu() {
+    document.getElementById('attachDropdown').classList.remove('open');
+}
+
+document.addEventListener('click', () => closeAttachMenu());
+
+// ── DRAG AND DROP ──
+function setupDragDrop() {
+    const overlay = document.getElementById('dragOverlay');
+    let dragCounter = 0;
+
+    document.addEventListener('dragenter', e => {
+        if (e.dataTransfer.types.includes('Files')) {
+            dragCounter++;
+            overlay.classList.add('active');
         }
-        
-        // Allow Enter key in textarea (Ctrl+Enter to submit)
-        document.getElementById('userInput').addEventListener('keydown', function(e) {
-            if (e.ctrlKey && e.key === 'Enter') {
-                processRequest();
-            }
+    });
+
+    document.addEventListener('dragleave', () => {
+        dragCounter--;
+        if (dragCounter <= 0) { dragCounter = 0; overlay.classList.remove('active'); }
+    });
+
+    document.addEventListener('dragover', e => { e.preventDefault(); });
+
+    document.addEventListener('drop', e => {
+        e.preventDefault();
+        dragCounter = 0;
+        overlay.classList.remove('active');
+        const file = e.dataTransfer.files[0];
+        if (file) handleFileSelect(file);
+    });
+}
+
+// ── RENDER ──
+function renderSidebar() {
+    const list = document.getElementById('chatsList');
+    if (chats.length === 0) {
+        list.innerHTML = `<div style="padding: 20px 8px; text-align: center; font-size: 12px; color: var(--text-dim);">No chats yet</div>`;
+        return;
+    }
+    const today = new Date().toDateString();
+    const yesterday = new Date(Date.now() - 86400000).toDateString();
+    let html = '', lastSection = '';
+    chats.forEach(chat => {
+        const d = new Date(chat.createdAt);
+        const ds = d.toDateString();
+        let section = ds === today ? 'Today' : ds === yesterday ? 'Yesterday' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        if (section !== lastSection) { html += `<div class="chats-section-label">${section}</div>`; lastSection = section; }
+        const active = chat.id === activeChatId ? 'active' : '';
+        const timeStr = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        html += `
+            <div class="chat-item ${active}" onclick="loadChat('${chat.id}')">
+                <span class="chat-item-icon">💬</span>
+                <span class="chat-item-text">${escapeHTML(chat.title)}</span>
+                <span class="chat-item-date">${timeStr}</span>
+                <button class="chat-item-delete" onclick="deleteChat('${chat.id}', event)" title="Delete">✕</button>
+            </div>`;
+    });
+    list.innerHTML = html;
+}
+
+function renderMessages(chat) {
+    const container = document.getElementById('messagesContainer');
+    if (!chat.messages || chat.messages.length === 0) { container.innerHTML = emptyStateHTML(); return; }
+    container.innerHTML = chat.messages.map(msg => renderMessage(msg)).join('');
+    scrollToBottom();
+}
+
+function renderMessage(msg) {
+    const isUser  = msg.role === 'user';
+    const isError = msg.role === 'error';
+    const isHitl  = msg.role === 'hitl';
+    const time = new Date(msg.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+    // ── HITL card ──
+    if (isHitl) {
+        const tid = escapeHTML(msg.thread_id);
+        const toolName = escapeHTML(msg.tool_name || 'unknown');
+        const toolArgs = msg.tool_args ? JSON.stringify(msg.tool_args, null, 2) : '{}';
+
+        if (msg.resolved) {
+            const decisionLabel = msg.decision === 'approve' ? '✅ Approved' : msg.decision === 'reject' ? '❌ Rejected' : '✏️ Edited';
+            return `
+                <div class="message-row">
+                    <div class="avatar agent">🏥</div>
+                    <div class="message-content">
+                        <div class="message-sender">Prior Auth Agent</div>
+                        <div class="hitl-card" style="border-color:var(--border);opacity:0.6;">
+                            <div class="hitl-header">
+                                <span class="hitl-badge" style="background:rgba(74,74,82,0.2);color:var(--text-dim);border-color:var(--border);">Review</span>
+                                <span class="hitl-title" style="color:var(--text-muted);">${decisionLabel} — ${toolName}</span>
+                            </div>
+                        </div>
+                        <div class="message-time">${time}</div>
+                    </div>
+                </div>`;
+        }
+
+        return `
+            <div class="message-row">
+                <div class="avatar agent">🏥</div>
+                <div class="message-content">
+                    <div class="message-sender">Prior Auth Agent</div>
+                    <div class="hitl-card" id="hitl-${tid}">
+                        <div class="hitl-header">
+                            <span class="hitl-badge">⏸ Review Required</span>
+                            <span class="hitl-title">Agent wants to run a tool</span>
+                        </div>
+                        <div class="hitl-tool-box">
+                            <div class="hitl-tool-name">🔧 ${toolName}</div>
+                            <div class="hitl-tool-arg">${escapeHTML(toolArgs)}</div>
+                        </div>
+                        <div class="hitl-actions">
+                            <button class="hitl-btn hitl-btn-approve" onclick="resumeDecision('${tid}', 'approve', document.getElementById('hitl-${tid}'))">
+                                ✅ Approve
+                            </button>
+                            <button class="hitl-btn hitl-btn-reject" onclick="resumeDecision('${tid}', 'reject', document.getElementById('hitl-${tid}'))">
+                                ❌ Reject
+                            </button>
+                            <button class="hitl-btn hitl-btn-edit" onclick="resumeDecision('${tid}', 'edit', document.getElementById('hitl-${tid}'))">
+                                ✏️ Edit path
+                            </button>
+                        </div>
+                        <div class="hitl-edit-row">
+                            <input class="hitl-edit-input" placeholder="Enter new file path…" />
+                            <button class="hitl-edit-confirm" onclick="confirmEdit('${tid}', document.getElementById('hitl-${tid}'))">Confirm</button>
+                        </div>
+                    </div>
+                    <div class="message-time">${time}</div>
+                </div>
+            </div>`;
+    }
+
+    // ── Normal messages ──
+    const avatar = isUser ? '👤' : '🏥';
+    const senderLabel = isUser ? 'You' : (isError ? 'Error' : 'Prior Auth Agent');
+    const errorClass = isError ? 'error-message' : '';
+
+    let attachmentHTML = '';
+    if (msg.attachment) {
+        const a = msg.attachment;
+        const ext = a.ext || 'file';
+        const icon = FILE_ICONS[ext] || '📄';
+        const tagClass = FILE_TAG_CLASS[ext] || 'tag-doc';
+        attachmentHTML = `
+            <div class="attachment-badge">
+                <span class="attachment-badge-icon">${icon}</span>
+                <div class="attachment-badge-info">
+                    <span class="attachment-badge-name">${escapeHTML(a.name)}</span>
+                    <span class="attachment-badge-meta">${escapeHTML(a.size)} · <span class="file-type-tag ${tagClass}" style="font-size:9px;padding:1px 5px;">${ext.toUpperCase()}</span></span>
+                </div>
+            </div><br>`;
+    }
+
+    return `
+        <div class="message-row ${errorClass}">
+            <div class="avatar ${isUser ? 'user' : 'agent'}">${avatar}</div>
+            <div class="message-content">
+                <div class="message-sender">${senderLabel}</div>
+                ${attachmentHTML}
+                <div class="message-text ${isUser ? 'user-text' : ''}">${escapeHTML(msg.content)}</div>
+                <div class="message-time">${time}</div>
+            </div>
+        </div>`;
+}
+
+function emptyStateHTML() {
+    return `
+        <div class="empty-state" id="emptyState">
+            <div class="empty-icon">🏥</div>
+            <div class="empty-title">Prior Authorization Assistant</div>
+            <div class="empty-sub">Submit prior authorization requests via text or upload a document — PDF, image, or text file — for instant AI-powered analysis.</div>
+            <div class="suggestion-chips">
+                <button class="chip" onclick="useChip(this)">Patient needs MRI for chronic back pain — CPT 72148</button>
+                <button class="chip" onclick="useChip(this)">Prior auth for Humira (adalimumab) — rheumatoid arthritis</button>
+                <button class="chip" onclick="useChip(this)">Outpatient surgery approval — laparoscopic cholecystectomy</button>
+                <button class="chip" onclick="useChip(this)">Physical therapy 20 sessions — post knee replacement</button>
+            </div>
+        </div>`;
+}
+
+// ── MESSAGING ──
+async function sendMessage() {
+    const input = document.getElementById('messageInput');
+    const text = input.value.trim();
+
+    // Must have either text or a file
+    if (!text && !pendingFile) return;
+
+    if (!activeChatId) newChat();
+    const chat = getActiveChat();
+
+    input.value = '';
+    autoResize(input);
+
+    const hasFile = !!pendingFile;
+    const fileMeta = hasFile ? { name: pendingFile.name, ext: pendingFile.ext, size: formatSize(pendingFile.size) } : null;
+
+    // Build display content for user message
+    const displayText = text || (hasFile ? `Processing document: ${pendingFile.name}` : '');
+
+    const userMsg = {
+        role: 'user',
+        content: displayText,
+        timestamp: new Date().toISOString(),
+        attachment: fileMeta
+    };
+    chat.messages.push(userMsg);
+
+    if (chat.messages.length === 1) {
+        chat.title = (hasFile ? `📄 ${pendingFile.name}` : text).slice(0, 45) + (displayText.length > 45 ? '…' : '');
+        document.getElementById('activeChatTitle').textContent = chat.title;
+    }
+
+    // Capture file data before clearing
+    const fileToSend = pendingFile ? { ...pendingFile } : null;
+
+    // Clear file attachment UI
+    if (hasFile) removeFile();
+
+    saveChats();
+    renderMessages(chat);
+    renderSidebar();
+    showTyping();
+    document.getElementById('sendBtn').disabled = true;
+
+    try {
+        let response, data;
+
+        if (fileToSend) {
+            // ── FILE PATH: send as multipart/form-data to /process-file ──
+            const formData = new FormData();
+            formData.append('file', fileToSend.file, fileToSend.name);
+            if (text) formData.append('note', text);
+
+            response = await fetch('http://localhost:8000/process-file', {
+                method: 'POST',
+                body: formData
+            });
+        } else {
+            // ── TEXT PATH: existing /process endpoint ──
+            response = await fetch('http://localhost:8000/process', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text })
+            });
+        }
+
+        data = await response.json();
+        hideTyping();
+        document.getElementById('sendBtn').disabled = false;
+
+        if (!response.ok) {
+            chat.messages.push({
+                role: 'error',
+                content: `Error: ${data.detail || 'Unknown error'}`,
+                timestamp: new Date().toISOString()
+            });
+        } else if (data.status === 'interrupted') {
+            // ── HITL: agent paused, show approve/reject/edit card ──
+            chat.messages.push({
+                role: 'hitl',
+                thread_id: data.thread_id,
+                tool_name: data.pending_tool_call?.name,
+                tool_args: data.pending_tool_call?.args,
+                message:   data.message,
+                resolved:  false,
+                timestamp: new Date().toISOString()
+            });
+        } else {
+            // ── Normal response ──
+            chat.messages.push({
+                role:      'agent',
+                content:   data.agent_response,
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        saveChats();
+        renderMessages(chat);
+
+    } catch (err) {
+        hideTyping();
+        document.getElementById('sendBtn').disabled = false;
+
+        chat.messages.push({
+            role: 'error',
+            content: 'Cannot connect to server. Make sure the API is running at http://localhost:8000',
+            timestamp: new Date().toISOString()
         });
-    </script>
+
+        saveChats();
+        renderMessages(chat);
+    }
+}
+
+// ── HITL DECISION ──
+async function resumeDecision(threadId, decision, cardEl) {
+    const btns = cardEl.querySelectorAll('.hitl-btn');
+    btns.forEach(b => b.disabled = true);
+
+    let editedArgs = null;
+
+    if (decision === 'edit') {
+        // Show the edit input row
+        const editRow = cardEl.querySelector('.hitl-edit-row');
+        editRow.classList.add('visible');
+        return; // wait for confirm button
+    }
+
+    await sendResume(threadId, decision, editedArgs, cardEl);
+}
+
+async function confirmEdit(threadId, cardEl) {
+    const input = cardEl.querySelector('.hitl-edit-input');
+    const newPath = input.value.trim();
+    if (!newPath) { input.focus(); return; }
+    await sendResume(threadId, 'edit', { file_path: newPath }, cardEl);
+}
+
+async function sendResume(threadId, decision, editedArgs, cardEl) {
+    // Mark card as processing
+    const btns = cardEl.querySelectorAll('.hitl-btn, .hitl-edit-confirm');
+    btns.forEach(b => b.disabled = true);
+    cardEl.querySelector('.hitl-actions').innerHTML += `<span style="font-size:12px;color:var(--text-muted);margin-top:4px;">Processing…</span>`;
+
+    const chat = getActiveChat();
+
+    try {
+        const body = { thread_id: threadId, decision };
+        if (editedArgs) body.edited_args = editedArgs;
+
+        const response = await fetch('http://localhost:8000/resume', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+
+        const data = await response.json();
+
+        // Mark the HITL message as resolved
+        const hitlMsg = chat.messages.find(m => m.role === 'hitl' && m.thread_id === threadId);
+        if (hitlMsg) {
+            hitlMsg.resolved = true;
+            hitlMsg.decision = decision;
+        }
+
+        if (!response.ok) {
+            chat.messages.push({
+                role: 'error',
+                content: `Resume error: ${data.detail || 'Unknown error'}`,
+                timestamp: new Date().toISOString()
+            });
+        } else if (data.status === 'interrupted') {
+            // Another interrupt — show a new HITL card
+            chat.messages.push({
+                role:      'hitl',
+                thread_id: data.thread_id,
+                tool_name: data.pending_tool_call?.name,
+                tool_args: data.pending_tool_call?.args,
+                message:   data.message,
+                resolved:  false,
+                timestamp: new Date().toISOString()
+            });
+        } else {
+            chat.messages.push({
+                role:      'agent',
+                content:   data.agent_response,
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        saveChats();
+        renderMessages(chat);
+
+    } catch (err) {
+        chat.messages.push({
+            role: 'error',
+            content: 'Cannot connect to server during resume.',
+            timestamp: new Date().toISOString()
+        });
+        saveChats();
+        renderMessages(chat);
+    }
+}
+
+function showTyping() {
+    const container = document.getElementById('messagesContainer');
+    const t = document.createElement('div');
+    t.className = 'typing-row';
+    t.id = 'typingIndicator';
+    t.innerHTML = `
+        <div class="avatar agent">🏥</div>
+        <div class="message-content">
+            <div class="message-sender">Prior Auth Agent</div>
+            <div class="typing-dots"><span></span><span></span><span></span></div>
+        </div>`;
+    container.appendChild(t);
+    scrollToBottom();
+}
+
+function hideTyping() {
+    const t = document.getElementById('typingIndicator');
+    if (t) t.remove();
+}
+
+// ── UTILS ──
+function handleKeydown(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 200) + 'px';
+}
+
+function scrollToBottom() {
+    const c = document.getElementById('messagesContainer');
+    c.scrollTop = c.scrollHeight;
+}
+
+function useChip(btn) {
+    const input = document.getElementById('messageInput');
+    input.value = btn.textContent;
+    autoResize(input);
+    input.focus();
+}
+
+function escapeHTML(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function checkAPIStatus() {
+    const statusEl = document.getElementById('statusText');
+    try {
+        const r = await fetch('http://localhost:8000/', { signal: AbortSignal.timeout(3000) });
+        if (r.ok) { statusEl.textContent = 'API connected'; }
+        else { statusEl.textContent = 'API error'; document.querySelector('.status-dot').style.background = 'var(--danger)'; }
+    } catch {
+        statusEl.textContent = 'API offline';
+        document.querySelector('.status-dot').style.background = 'var(--danger)';
+        document.querySelector('.status-dot').style.animation = 'none';
+    }
+}
+
+// ── START ──
+init();
+</script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
